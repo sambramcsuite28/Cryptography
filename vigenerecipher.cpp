@@ -4,71 +4,82 @@
 
 using namespace std;
 
-// Function to extend the key to match the length of the text
-string extendKey(const string &text, const string &key) {
-    string extendedKey;
-    int keyLength = key.length();
-    int textLength = text.length();
-
-    for (int i = 0; i < textLength; i++) {
-        extendedKey += key[i % keyLength];
+// Function to extend the key to match the length of the message
+string extendKey(const string &message, const string &key) {
+    string extendedKey = key;
+    while (extendedKey.length() < message.length()) {
+        extendedKey += key;
     }
-
-    return extendedKey;
+    return extendedKey.substr(0, message.length());
 }
 
-// Function to encrypt the plaintext using the Vigenere Cipher
-string encryptVigenere(const string &plaintext, const string &key) {
-    string ciphertext = "";
-    string extendedKey = extendKey(plaintext, key);
+// Function to encrypt the message using the Vigenère cipher
+string vigenereEncrypt(const string &message, const string &key) {
+    string encryptedText = "";
+    string extendedKey = extendKey(message, key);
 
-    for (size_t i = 0; i < plaintext.length(); i++) {
-        if (isalpha(plaintext[i])) {
-            char base = islower(plaintext[i]) ? 'a' : 'A';
-            char keyBase = islower(extendedKey[i]) ? 'a' : 'A';
-            char encryptedChar = (plaintext[i] - base + extendedKey[i] - keyBase) % 26 + base;
-            ciphertext += encryptedChar;
+    for (size_t i = 0; i < message.length(); i++) {
+        if (isalpha(message[i])) {
+            char base = isupper(message[i]) ? 'A' : 'a';
+            char shift = isupper(extendedKey[i]) ? 'A' : 'a';
+            char encryptedChar = ((message[i] - base + extendedKey[i] - shift) % 26) + base;
+            encryptedText += encryptedChar;
         } else {
-            ciphertext += plaintext[i];
+            encryptedText += message[i]; // Keep non-alphabetic characters unchanged
         }
     }
-
-    return ciphertext;
+    return encryptedText;
 }
 
-// Function to decrypt the ciphertext using the Vigenere Cipher
-string decryptVigenere(const string &ciphertext, const string &key) {
-    string plaintext = "";
-    string extendedKey = extendKey(ciphertext, key);
+// Function to decrypt the message using the Vigenère cipher
+string vigenereDecrypt(const string &encryptedText, const string &key) {
+    string decryptedText = "";
+    string extendedKey = extendKey(encryptedText, key);
 
-    for (size_t i = 0; i < ciphertext.length(); i++) {
-        if (isalpha(ciphertext[i])) {
-            char base = islower(ciphertext[i]) ? 'a' : 'A';
-            char keyBase = islower(extendedKey[i]) ? 'a' : 'A';
-            char decryptedChar = (ciphertext[i] - base - (extendedKey[i] - keyBase) + 26) % 26 + base;
-            plaintext += decryptedChar;
+    for (size_t i = 0; i < encryptedText.length(); i++) {
+        if (isalpha(encryptedText[i])) {
+            char base = isupper(encryptedText[i]) ? 'A' : 'a';
+            char shift = isupper(extendedKey[i]) ? 'A' : 'a';
+            char decryptedChar = ((encryptedText[i] - base - (extendedKey[i] - shift) + 26) % 26) + base;
+            decryptedText += decryptedChar;
         } else {
-            plaintext += ciphertext[i];
+            decryptedText += encryptedText[i]; // Keep non-alphabetic characters unchanged
         }
     }
-
-    return plaintext;
+    return decryptedText;
 }
 
 int main() {
-    string plaintext, key, ciphertext;
+    string message, key;
 
-    cout << "Enter the plaintext: ";
-    getline(cin, plaintext);
+    cout << "Enter the message to encrypt: ";
+    getline(cin, message);
 
-    cout << "Enter the key: ";
-    getline(cin, key);
+    cout << "Enter the encryption key: ";
+    cin >> key;
 
-    ciphertext = encryptVigenere(plaintext, key);
-    cout << "Encrypted text: " << ciphertext << endl;
+    // Convert key to uppercase for consistency
+    for (char &c : key) {
+        c = toupper(c);
+    }
 
-    string decryptedText = decryptVigenere(ciphertext, key);
-    cout << "Decrypted text: " << decryptedText << endl;
+    string encryptedMessage = vigenereEncrypt(message, key);
+    string decryptedMessage = vigenereDecrypt(encryptedMessage, key);
+
+    cout << "\nOriginal Message:  " << message;
+    cout << "\nEncryption Key:    " << key;
+    cout << "\nEncrypted Message: " << encryptedMessage;
+    cout << "\nDecrypted Message: " << decryptedMessage << endl;
 
     return 0;
 }
+
+//OUTPUT
+/*Enter the message to encrypt: HELLOVIGENERE
+Enter the encryption key: KEY
+
+Original Message:  HELLOVIGENERE
+Encryption Key:    KEY
+Encrypted Message: RIJVSUYVJYVIQ
+Decrypted Message: HELLOVIGENERE
+*/ 
