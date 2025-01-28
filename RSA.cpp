@@ -1,91 +1,116 @@
 #include <iostream>
 #include <cmath>
-#include <vector>
+#include <cstdlib>
+#include <ctime>
+
 using namespace std;
 
-// Function to compute GCD (Greatest Common Divisor)
-int gcd(int a, int b) {
-    if (b == 0)
-        return a;
-    return gcd(b, a % b);
-}
-
-// Function to compute modular exponentiation
-int modExp(int base, int exp, int mod) {
-    int result = 1;
+// Function to compute (base^exp) % mod using modular exponentiation
+long long modExp(long long base, long long exp, long long mod) {
+    long long result = 1;
     base = base % mod;
     while (exp > 0) {
-        if (exp % 2 == 1) // If exp is odd
+        if (exp % 2 == 1) {
             result = (result * base) % mod;
-        exp = exp >> 1; // Divide exp by 2
+        }
         base = (base * base) % mod;
+        exp = exp / 2;
     }
     return result;
 }
 
-// Function to compute modular inverse using Extended Euclidean Algorithm
-int modularInverse(int e, int phi) {
-    int x, y;
-    auto extendedEuclidean = [](int a, int b, int &x, int &y) -> int {
-        if (b == 0) {
-            x = 1, y = 0;
-            return a;
-        }
-        int x1, y1;
-        int gcd = extendedEuclidean(b, a % b, x1, y1);
-        x = y1;
-        y = x1 - (a / b) * y1;
-        return gcd;
-    };
-
-    int gcd = extendedEuclidean(e, phi, x, y);
-    if (gcd != 1) {
-        cout << "Modular inverse does not exist!" << endl;
-        return -1;
-    }
-    return (x % phi + phi) % phi;
+// Function to compute GCD of two numbers
+long long gcd(long long a, long long b) {
+    if (b == 0) return a;
+    return gcd(b, a % b);
 }
 
-int main() {
-    // Step 1: Select two prime numbers p and q
-    int p = 61, q = 53; // You can change these values
-    int n = p * q;      // Calculate n
-    int phi = (p - 1) * (q - 1); // Calculate Euler's totient function
+// Function to compute modular inverse of a number
+long long modInverse(long long a, long long m) {
+    long long m0 = m, y = 0, x = 1;
+    if (m == 1) return 0;
+    while (a > 1) {
+        long long q = a / m;
+        long long t = m;
+        m = a % m;
+        a = t;
+        t = y;
+        y = x - q * y;
+        x = t;
+    }
+    if (x < 0) x += m0;
+    return x;
+}
 
-    // Step 2: Choose e such that 1 < e < phi and gcd(e, phi) = 1
-    int e = 17; // Commonly used value
-    while (gcd(e, phi) != 1) {
+// Function to generate the public and private keys (e, d, n)
+void generateKeys(long long &e, long long &d, long long &n, long long p, long long q) {
+    n = p * q;
+    long long phi = (p - 1) * (q - 1);
+    
+    // Find e such that 1 < e < phi and gcd(e, phi) = 1
+    e = 2;
+    while (e < phi) {
+        if (gcd(e, phi) == 1) break;
         e++;
     }
 
-    // Step 3: Compute d (modular inverse of e)
-    int d = modularInverse(e, phi);
+    // Find d such that (d * e) % phi = 1
+    d = modInverse(e, phi);
+}
 
-    // Display the public and private keys
+// Function to encrypt a message using the public key (e, n)
+long long encrypt(long long m, long long e, long long n) {
+    return modExp(m, e, n);
+}
+
+// Function to decrypt a message using the private key (d, n)
+long long decrypt(long long c, long long d, long long n) {
+    return modExp(c, d, n);
+}
+
+int main() {
+    long long p, q, e, d, n;
+    cout << "Enter two prime numbers p and q: ";
+    cin >> p >> q;
+
+    // Generate the RSA keys
+    generateKeys(e, d, n, p, q);
+
     cout << "Public Key (e, n): (" << e << ", " << n << ")" << endl;
     cout << "Private Key (d, n): (" << d << ", " << n << ")" << endl;
 
-    // Step 4: Encryption
-    string plaintext;
-    cout << "Enter a word to encrypt: ";
-    cin >> plaintext;
+    // Encrypt a message (word to encrypt)
+    string message;
+    cout << "Enter the message to encrypt (as numbers): ";
+    cin >> message;
 
-    vector<int> encrypted;
-    cout << "Encrypted message: ";
-    for (char ch : plaintext) {
-        int encryptedChar = modExp((int)ch, e, n);
-        encrypted.push_back(encryptedChar);
-        cout << encryptedChar << " ";
+    // Convert the message into numbers (ASCII values)
+    long long encryptedMessage[message.length()];
+    for (int i = 0; i < message.length(); i++) {
+        encryptedMessage[i] = encrypt(message[i], e, n);
+        cout << "Encrypted character " << message[i] << " -> " << encryptedMessage[i] << endl;
     }
-    cout << endl;
 
-    // Step 5: Decryption
-    cout << "Decrypted message: ";
-    for (int encryptedChar : encrypted) {
-        char decryptedChar = (char)modExp(encryptedChar, d, n);
+    // Decrypt the message
+    cout << "\nDecrypted message: ";
+    for (int i = 0; i < message.length(); i++) {
+        char decryptedChar = decrypt(encryptedMessage[i], d, n);
         cout << decryptedChar;
     }
     cout << endl;
 
     return 0;
 }
+
+//OUTPUT
+// Enter two prime numbers p and q: 61 53
+// Public Key (e, n): (17, 3233)
+// Private Key (d, n): (2753, 3233)
+// Enter the message to encrypt (as numbers): HELLO
+// Encrypted character 72 -> 2170
+// Encrypted character 69 -> 1634
+// Encrypted character 76 -> 2170
+// Encrypted character 76 -> 2170
+// Encrypted character 79 -> 1598
+
+// Decrypted message: HELLO
