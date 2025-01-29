@@ -79,13 +79,3 @@ int main() {
 
     return 0;
 }
-
-//Output
-/*Enter the message to encrypt: AffineCipher
-Enter key 'a' (must be coprime with 26): 5
-Enter key 'b': 8
-
-Original Message:  AffineCipher
-Encrypted Message: IxxqvqKxhnqv
-Decrypted Message: AffineCipher
-*/
